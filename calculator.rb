@@ -31,15 +31,12 @@ class Calculator
           memory_write
         when "mr"
           memory_read
-
-        # ДОДАНО
         when "push"
           push_stack
         when "pop"
           pop_stack
         when "primes"
           start_primes
-
         else
           process_input(input)
         end
@@ -81,7 +78,6 @@ class Calculator
   end
 
   def process_number(num)
-    # ДОДАНО
     if @pending_primes
       process_primes_range(num)
       return
@@ -129,8 +125,6 @@ class Calculator
   def reset_chain_state
     @pending_binary_op = nil
     @waiting_for_number = false
-
-    # ДОДАНО
     @pending_primes = false
     @primes_start = nil
   end
@@ -451,8 +445,6 @@ class Calculator
     end
   end
 
-  
-
   def push_stack
     raise "Nothing to push" if @current_result.nil?
 
@@ -469,7 +461,6 @@ class Calculator
     @history << "pop = #{format_number(value)}"
     puts format_number(value)
   end
-
 
   def start_primes
     raise "No left operand for primes" if @current_result.nil?
