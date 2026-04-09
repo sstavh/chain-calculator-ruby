@@ -6,6 +6,10 @@ class Calculator
     @pending_binary_op = nil
     @waiting_for_number = false
     @expression_mode = false
+
+    @stack = []
+    @pending_primes = false
+    @primes_start = nil
   end
 
   def start
@@ -27,6 +31,15 @@ class Calculator
           memory_write
         when "mr"
           memory_read
+
+        # ДОДАНО
+        when "push"
+          push_stack
+        when "pop"
+          pop_stack
+        when "primes"
+          start_primes
+
         else
           process_input(input)
         end
@@ -67,9 +80,13 @@ class Calculator
     raise "Invalid input"
   end
 
-
-
   def process_number(num)
+    # ДОДАНО
+    if @pending_primes
+      process_primes_range(num)
+      return
+    end
+
     if @current_result.nil?
       @current_result = num
       @history << "#{format_number(num)}"
@@ -112,9 +129,11 @@ class Calculator
   def reset_chain_state
     @pending_binary_op = nil
     @waiting_for_number = false
-  end
 
-  
+    # ДОДАНО
+    @pending_primes = false
+    @primes_start = nil
+  end
 
   def memory_write
     raise "Nothing to write" if @current_result.nil?
@@ -130,8 +149,6 @@ class Calculator
     puts format_number(@current_result)
   end
 
-
-
   def show_history
     if @history.empty?
       puts "History is empty"
@@ -141,8 +158,6 @@ class Calculator
       end
     end
   end
-
-
 
   def binary_operator?(input)
     ["+", "-", "*", "/", "mod", "pow"].include?(input)
@@ -202,8 +217,6 @@ class Calculator
       raise "Unknown unary operator"
     end
   end
-
-
 
   def expression_input?(input)
     input.include?("(") || input.include?(")") || input.include?(" ")
@@ -417,7 +430,6 @@ class Calculator
     end
   end
 
-
   def factorial(x)
     raise "Invalid factorial" if x < 0 || !integer?(x)
     (1..x.to_i).reduce(1, :*)
@@ -437,6 +449,83 @@ class Calculator
     else
       num.to_s
     end
+  end
+
+  
+
+  def push_stack
+    raise "Nothing to push" if @current_result.nil?
+
+    @stack << @current_result
+    @history << "push #{format_number(@current_result)}"
+    puts format_number(@current_result)
+  end
+
+  def pop_stack
+    raise "Stack is empty" if @stack.empty?
+
+    value = @stack.pop
+    @current_result = value
+    @history << "pop = #{format_number(value)}"
+    puts format_number(value)
+  end
+
+
+  def start_primes
+    raise "No left operand for primes" if @current_result.nil?
+    raise "Operator already pending" if @pending_binary_op
+
+    @pending_primes = true
+    @primes_start = @current_result
+    puts "primes"
+  end
+
+  def process_primes_range(limit)
+    raise "Invalid primes range" unless integer?(@primes_start) && integer?(limit)
+
+    start_num = @primes_start.to_i
+    end_num = limit.to_i
+
+    raise "Invalid primes range" if end_num <= start_num
+
+    primes = find_primes_in_range(start_num + 1, end_num)
+
+    raise "No primes found" if primes.empty?
+
+    primes.each do |prime|
+      @stack << prime
+    end
+
+    @current_result = primes.last
+    @history << "primes #{start_num}..#{end_num} => #{primes.map { |x| format_number(x) }.join(', ')}"
+    @pending_primes = false
+    @primes_start = nil
+
+    puts format_number(@current_result)
+  end
+
+  def find_primes_in_range(from, to)
+    result = []
+
+    (from..to).each do |num|
+      result << num if prime?(num)
+    end
+
+    result
+  end
+
+  def prime?(n)
+    return false if n < 2
+    return true if n == 2
+    return false if n.even?
+
+    i = 3
+    while i * i <= n
+      return false if n % i == 0
+      i += 2
+    end
+
+    true
   end
 end
 
